@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ular Tangga Edukasi — Bilangan Bulat (≤ 50)</title>
+<style>
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: 'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 45%, #00c6ff 100%);
+    background-attachment: fixed;
+    color: #24304a;
+    padding: 18px;
+  }
+
+  .app { max-width: 1100px; margin: 0 auto; }
+
+  header {
+    text-align: center;
+    color: #fff;
+    margin-bottom: 16px;
+    text-shadow: 0 3px 0 rgba(0,0,0,.18);
+  }
+  header h1 { margin: 0 0 4px; font-size: clamp(20px, 3.6vw, 34px); letter-spacing: .5px; }
+  header p  { margin: 0; font-size: clamp(12px, 1.8vw, 16px); opacity: .95; }
+  header .credit {
+    margin: 8px 0 0;
+    font-size: clamp(11px, 1.7vw, 15px);
+    font-weight: bold;
+    letter-spacing: .6px;
+    color: #ffe066;
+    text-shadow: 0 2px 0 rgba(0,0,0,.25);
+    opacity: .95;
+  }
+
+  main {
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .board-wrap {
+    background: #fff;
+    padding: 10px;
+    border-radius: 22px;
+    box-shadow: 0 14px 30px rgba(0,0,0,.28);
+    flex: 0 1 620px;
+    max-width: 620px;
+    width: 100%;
+  }
+  canvas {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 14px;
+    background: #eef4ff;
+  }
+
+  .panel {
+    flex: 0 1 320px;
+    width: 100%;
+    max-width: 340px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 18px;
+    padding: 14px 16px;
+    box-shadow: 0 10px 22px rgba(0,0,0,.20);
+  }
+
+  .turn-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(135deg, #fff6d5, #ffe0f0);
+    border: 3px solid #ffd166;
+  }
+  .turn-card .emoji { font-size: 34px; line-height: 1; }
+  .turn-card .label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #9a7b00; }
+  .turn-card .name  { font-size: 20px; font-weight: bold; color: #7a4b00; }
+
+  .dice-area { text-align: center; }
+  .dice {
+    width: 92px;
+    height: 92px;
+    margin: 0 auto 12px;
+    border-radius: 20px;
+    background: linear-gradient(145deg, #ffffff, #e6ecff);
+    border: 4px solid #4a6cf7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 54px;
+    color: #2b3a80;
+    box-shadow: 0 8px 0 #2f47b5, 0 12px 20px rgba(0,0,0,.25);
+    transition: transform .08s;
+  }
+  .dice.rolling { animation: shake .12s infinite; }
+  @keyframes shake {
+    0%   { transform: rotate(-8deg) scale(1.03); }
+    50%  { transform: rotate(8deg) scale(.97); }
+    100% { transform: rotate(-8deg) scale(1.03); }
+  }
+
+  button { font-family: inherit; cursor: pointer; border: none; outline: none; }
+
+  #rollBtn {
+    width: 100%;
+    padding: 14px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #fff;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #ff8a3d, #f4600f);
+    box-shadow: 0 6px 0 #b8430a;
+    transition: transform .08s, box-shadow .08s;
+  }
+  #rollBtn:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 2px 0 #b8430a; }
+  #rollBtn:disabled {
+    background: linear-gradient(180deg, #c9cfdd, #a8b0c2);
+    box-shadow: 0 6px 0 #8a92a5;
+    cursor: not-allowed;
+  }
+
+  .players { display: flex; flex-direction: column; gap: 10px; }
+  .pcard {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 3px solid transparent;
+    background: #f5f7ff;
+    transition: .2s;
+  }
+  .pcard.active {
+    border-color: #ffb703;
+    background: #fffbe8;
+    transform: scale(1.02);
+    box-shadow: 0 6px 14px rgba(255,183,3,.35);
+  }
+  .pcard .avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    flex: 0 0 auto;
+  }
+  .pcard .info { flex: 1 1 auto; min-width: 0; }
+  .pcard .pname { font-weight: bold; font-size: 15px; }
+  .pcard .pmeta { font-size: 12px; color: #667; }
+  .pcard .pts { font-weight: bold; font-size: 18px; color: #f4600f; white-space: nowrap; }
+
+  .log-card h3 {
+    margin: 0 0 8px;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #556;
+  }
+  #log {
+    max-height: 140px;
+    overflow-y: auto;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #334;
+  }
+  #log div { padding: 4px 6px; border-radius: 8px; margin-bottom: 3px; background: #f4f6fc; }
+  #log div:first-child { background: #e8f0ff; font-weight: bold; }
+
+  #musicBtn {
+    width: 100%;
+    padding: 10px;
+    border-radius: 12px;
+    font-weight: bold;
+    font-size: 15px;
+    color: #fff;
+    background: linear-gradient(180deg, #43d17a, #1fa855);
+    box-shadow: 0 5px 0 #146b36;
+    transition: .15s;
+  }
+  #musicBtn:active { transform: translateY(3px); box-shadow: 0 2px 0 #146b36; }
+  #musicBtn.off {
+    background: linear-gradient(180deg, #9aa3b5, #6b7385);
+    box-shadow: 0 5px 0 #4a5263;
+  }
+
+  #resetBtn {
+    width: 100%;
+    padding: 10px;
+    border-radius: 12px;
+    font-weight: bold;
+    font-size: 15px;
+    color: #fff;
+    background: linear-gradient(180deg, #6f7bf7, #4450d6);
+    box-shadow: 0 5px 0 #2d36a0;
+  }
+  #resetBtn:active { transform: translateY(3px); box-shadow: 0 2px 0 #2d36a0; }
+
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 20, 45, .72);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    z-index: 50;
+    animation: fadeIn .2s ease;
+  }
+  .modal.hidden { display: none; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .modal-card {
+    width: 100%;
+    max-width: 480px;
+    background: #fff;
+    border-radius: 24px;
+    padding: 22px;
+    box-shadow: 0 24px 50px rgba(0,0,0,.4);
+    animation: pop .28s cubic-bezier(.2,1.4,.5,1);
+    text-align: center;
+  }
+  @keyframes pop { from { transform: scale(.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  .quiz-headline { font-size: 24px; font-weight: bold; margin-bottom: 4px; color: #2575fc; }
+  .quiz-sub      { font-size: 14px; color: #667; margin-bottom: 16px; }
+  .quiz-question {
+    font-size: 34px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    margin: 14px 0 20px;
+    color: #1e2a4a;
+    background: #f1f5ff;
+    border-radius: 14px;
+    padding: 16px 10px;
+    border: 3px dashed #b9c8ff;
+  }
+  .quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .opt-btn {
+    padding: 16px 8px;
+    font-size: 22px;
+    font-weight: bold;
+    font-family: inherit;
+    color: #223;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #ffffff, #e8eeff);
+    border: 3px solid #b9c8ff;
+    box-shadow: 0 5px 0 #b9c8ff;
+    transition: .12s;
+  }
+  .opt-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    background: linear-gradient(180deg, #fffef0, #ffeeb8);
+    border-color: #ffc93c;
+    box-shadow: 0 5px 0 #ffc93c;
+  }
+  .opt-btn:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 2px 0 #b9c8ff; }
+  .opt-btn.correct {
+    background: linear-gradient(180deg, #c9f7c9, #7ee07e) !important;
+    border-color: #34a853 !important;
+    box-shadow: 0 5px 0 #34a853 !important;
+    color: #0a3d12;
+  }
+  .opt-btn.wrong {
+    background: linear-gradient(180deg, #ffd0d0, #ff9b9b) !important;
+    border-color: #e33 !important;
+    box-shadow: 0 5px 0 #e33 !important;
+    color: #5a0000;
+    animation: shakeX .35s;
+  }
+  @keyframes shakeX {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+  .quiz-feedback {
+    margin-top: 16px;
+    font-size: 16px;
+    font-weight: bold;
+    min-height: 24px;
+    color: #888;
+  }
+  .quiz-feedback.ok  { color: #1c9c46; }
+  .quiz-feedback.bad { color: #d62b2b; }
+
+  .win-card { max-width: 420px; }
+  .win-emoji { font-size: 70px; }
+  .win-title { font-size: 28px; font-weight: bold; color: #f4600f; margin: 8px 0; }
+  .win-sub { color: #556; margin-bottom: 18px; }
+
+  @media (max-width: 720px) {
+    main { flex-direction: column; align-items: center; }
+    .panel { max-width: 620px; }
+    .quiz-question { font-size: 26px; }
+    .opt-btn { font-size: 19px; padding: 13px 6px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <h1>🐍 Ular Tangga Edukasi 🪜</h1>
+    <p>Penjumlahan &amp; Pengurangan Bilangan Bulat (angka ≤ 50) — Setiap berhenti di petak, jawab soal untuk dapat poin!</p>
+    <p class="credit">Dibuat Oleh : Dedy Nugroho, S.Pd.SD</p>
+  </header>
+
+  <main>
+    <div class="board-wrap">
+      <canvas id="board" width="600" height="600"></canvas>
+    </div>
+
+    <aside class="panel">
+      <div class="card turn-card">
+        <div class="emoji" id="turnEmoji">🐯</div>
+        <div>
+          <div class="label">Giliran Sekarang</div>
+          <div class="name" id="turnName">Pemain 1</div>
+        </div>
+      </div>
+
+      <div class="card dice-area">
+        <div class="dice" id="dice">⚀</div>
+        <button id="rollBtn">🎲 Lempar Dadu</button>
+      </div>
+
+      <div class="card players">
+        <div class="pcard" id="pcard0">
+          <div class="avatar" style="background:#ffe0e0">🐯</div>
+          <div class="info">
+            <div class="pname" style="color:#e23b3b">Pemain 1</div>
+            <div class="pmeta">Petak: <span id="pos0">Start</span></div>
+          </div>
+          <div class="pts"><span id="score0">0</span> ⭐</div>
+        </div>
+
+        <div class="pcard" id="pcard1">
+          <div class="avatar" style="background:#dfe9ff">🐼</div>
+          <div class="info">
+            <div class="pname" style="color:#2575fc">Pemain 2</div>
+            <div class="pmeta">Petak: <span id="pos1">Start</span></div>
+          </div>
+          <div class="pts"><span id="score1">0</span> ⭐</div>
+        </div>
+      </div>
+
+      <div class="card log-card">
+        <h3>📜 Catatan Permainan</h3>
+        <div id="log"></div>
+      </div>
+
+      <button id="musicBtn">🎵 Musik: ON</button>
+      <button id="resetBtn">🔄 Mulai Ulang Permainan</button>
+    </aside>
+  </main>
+</div>
+
+<div class="modal hidden" id="quizModal">
+  <div class="modal-card">
+    <div class="quiz-headline" id="quizHeadline">❓ KUIS</div>
+    <div class="quiz-sub" id="quizSub">Jawab pertanyaan berikut</div>
+    <div class="quiz-question" id="quizQuestion">1 + 1 = ?</div>
+    <div class="quiz-options" id="quizOptions"></div>
+    <div class="quiz-feedback" id="quizFeedback"></div>
+  </div>
+</div>
+
+<div class="modal hidden" id="winModal">
+  <div class="modal-card win-card">
+    <div class="win-emoji">🏆</div>
+    <div class="win-title" id="winTitle">Pemain 1 Menang!</div>
+    <div class="win-sub" id="winSub">Skor akhir: 0 ⭐</div>
+    <button id="winResetBtn" style="padding:14px 26px;font-size:17px;font-weight:bold;color:#fff;border-radius:14px;background:linear-gradient(180deg,#ff8a3d,#f4600f);box-shadow:0 6px 0 #b8430a;">
+      Main Lagi 🎮
+    </button>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   1. KONFIGURASI PAPAN (10 x 10 = 100 petak)
+   ========================================================= */
+const SIZE = 600;
+const N    = 10;
+const CELL = SIZE / N;
+
+const canvas = document.getElementById('board');
+const ctx    = canvas.getContext('2d');
+
+const DPR = window.devicePixelRatio || 1;
+canvas.width  = SIZE * DPR;
+canvas.height = SIZE * DPR;
+ctx.scale(DPR, DPR);
+
+const LADDERS = { 2: 23, 8: 34, 20: 77, 32: 68, 41: 79, 74: 88, 82: 100 };
+const SNAKES  = { 29: 9, 38: 15, 47: 5, 53: 33, 62: 37, 86: 54, 92: 70, 98: 79 };
+const QUIZ_TILES = [7, 25, 44, 66, 90];
+
+/* =========================================================
+   2. STATE PERMAINAN
+   ========================================================= */
+const state = {
+  players: [
+    { name: 'Pemain 1', emoji: '🐯', color: '#ff4757', pos: 0, score: 0 },
+    { name: 'Pemain 2', emoji: '🐼', color: '#2575fc', pos: 0, score: 0 }
+  ],
+  turn: 0,
+  busy: false,
+  gameOver: false
+};
+
+/* =========================================================
+   3. UTILITAS
+   ========================================================= */
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+/* =========================================================
+   3b. MUSIC ENGINE — Web Audio API (musik ceria + SFX)
+   ========================================================= */
+const NOTE_FREQ = {
+  C3:130.81, D3:146.83, E3:164.81, F3:174.61, G3:196.00, A3:220.00, B3:246.94,
+  C4:261.63, D4:293.66, E4:329.63, F4:349.23, G4:392.00, A4:440.00, B4:493.88,
+  C5:523.25, D5:587.33, E5:659.25, F5:698.46, G5:783.99, A5:880.00
+};
+
+const MELODY = [
+  ['C5',0.5],['E5',0.5],['G5',0.5],['E5',0.5],
+  ['C5',0.5],['E5',0.5],['G5',1.0],
+  ['D5',0.5],['G5',0.5],['B4',0.5],['D5',0.5],
+  ['G5',0.5],['D5',0.5],['B4',1.0],
+  ['A4',0.5],['C5',0.5],['E5',0.5],['A5',0.5],
+  ['E5',0.5],['C5',0.5],['A4',1.0],
+  ['F4',0.5],['A4',0.5],['C5',0.5],['F5',0.5],
+  ['C5',0.5],['A4',0.5],['F4',1.0],
+  ['C5',0.5],['E5',0.5],['G5',0.5],['E5',0.5],
+  ['C5',0.5],['E5',0.5],['G5',1.0],
+  ['D5',0.5],['G5',0.5],['B4',0.5],['D5',0.5],
+  ['G5',0.5],['D5',0.5],['B4',1.0],
+  ['F4',0.5],['A4',0.5],['C5',0.5],['F5',0.5],
+  ['A5',0.5],['F5',0.5],['C5',1.0],
+  ['C5',0.5],['G4',0.5],['E4',0.5],['G4',0.5],
+  ['C5',2.0]
+];
+const BASS = ['C3','G3','A3','F3','C3','G3','F3','C3'];
+const TEMPO = 120;
+const BEAT  = 60 / TEMPO;
+
+const Music = (() => {
+  let ctx = null, master = null, musicGain = null, sfxGain = null;
+  let playing = false, enabled = true, loopTimeout = null;
+
+  function init() {
+    if (ctx) return;
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    master    = ctx.createGain(); master.gain.value    = 0.55; master.connect(ctx.destination);
+    musicGain = ctx.createGain(); musicGain.gain.value = 0.22; musicGain.connect(master);
+    sfxGain   = ctx.createGain(); sfxGain.gain.value   = 0.55; sfxGain.connect(master);
+  }
+
+  function playNote(freq, start, dur, type, vol, target) {
+    const osc = ctx.createOscillator();
+    const g   = ctx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, start);
+    g.gain.linearRampToValueAtTime(vol, start + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+    osc.connect(g); g.connect(target);
+    osc.start(start);
+    osc.stop(start + dur + 0.05);
+  }
+
+  function scheduleLoop() {
+    if (!playing || !ctx) return;
+    const loopStart = ctx.currentTime + 0.08;
+    let t = loopStart;
+
+    MELODY.forEach(([note, beats]) => {
+      const dur = beats * BEAT;
+      playNote(NOTE_FREQ[note], t, dur * 0.85, 'triangle', 0.12, musicGain);
+      if (beats >= 1) {
+        playNote(NOTE_FREQ[note] * 2, t, dur * 0.6, 'sine', 0.05, musicGain);
+      }
+      t += dur;
+    });
+
+    const barDur = 4 * BEAT;
+    BASS.forEach((note, i) => {
+      playNote(NOTE_FREQ[note], loopStart + i * barDur, barDur * 0.9, 'sine', 0.14, musicGain);
+    });
+
+    const totalDur = t - loopStart;
+    loopTimeout = setTimeout(scheduleLoop, (totalDur - 0.15) * 1000);
+  }
+
+  function start() {
+    if (!enabled) return;
+    init();
+    if (ctx.state === 'suspended') ctx.resume();
+    if (playing) return;
+    playing = true;
+    scheduleLoop();
+  }
+
+  function stop() {
+    playing = false;
+    if (loopTimeout) { clearTimeout(loopTimeout); loopTimeout = null; }
+  }
+
+  function toggle() {
+    enabled = !enabled;
+    if (enabled) { start(); } else { stop(); }
+    return enabled;
+  }
+
+  function ensureCtx() { init(); if (ctx.state === 'suspended') ctx.resume(); }
+
+  function sfxDice() {
+    ensureCtx();
+    const t0 = ctx.currentTime;
+    [660, 880, 1100, 880].forEach((f, i) => {
+      playNote(f, t0 + i * 0.05, 0.09, 'square', 0.10, sfxGain);
+    });
+  }
+  function sfxCorrect() {
+    ensureCtx();
+    const t0 = ctx.currentTime;
+    [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+      playNote(f, t0 + i * 0.07, 0.18, 'triangle', 0.16, sfxGain);
+    });
+  }
+  function sfxWrong() {
+    ensureCtx();
+    const t0 = ctx.currentTime;
+    [440, 349.23, 261.63].forEach((f, i) => {
+      playNote(f, t0 + i * 0.12, 0.18, 'sawtooth', 0.10, sfxGain);
+    });
+  }
+  function sfxLadder() {
+    ensureCtx();
+    const t0 = ctx.currentTime;
+    [523.25, 659.25, 783.99, 1046.5, 1318.5].forEach((f, i) => {
+      playNote(f, t0 + i * 0.06, 0.13, 'triangle', 0.13, sfxGain);
+    });
+  }
+  function sfxSnake() {
+    ensureCtx();
+    const t0 = ctx.currentTime;
+    for (let i = 0; i < 14; i++) {
+      const f = 800 - i * 50;
+      playNote(f, t0 + i * 0.04, 0.08, 'sawtooth', 0.06, sfxGain);
+    }
+  }
+  function sfxWin() {
+    ensureCtx();
+    const t0 = ctx.currentTime;
+    [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5, 1318.5].forEach((f, i) => {
+      playNote(f, t0 + i * 0.14, 0.35, 'triangle', 0.16, sfxGain);
+    });
+  }
+
+  return { start, stop, toggle, sfxDice, sfxCorrect, sfxWrong, sfxLadder, sfxSnake, sfxWin };
+})();
+
+/* =========================================================
+   4. GAMBAR PAPAN
+   ========================================================= */
+function roundRect(c, x, y, w, h, r) {
+  c.beginPath();
+  c.moveTo(x + r, y);
+  c.arcTo(x + w, y,     x + w, y + h, r);
+  c.arcTo(x + w, y + h, x,     y + h, r);
+  c.arcTo(x,     y + h, x,     y,     r);
+  c.arcTo(x,     y,     x + w, y,     r);
+  c.closePath();
+}
+
+function tileCenter(tile) {
+  const idx = tile - 1;
+  const rowFromBottom = Math.floor(idx / 10);
+  let col = idx % 10;
+  if (rowFromBottom % 2 === 1) col = 9 - col;
+  const x = col * CELL + CELL / 2;
+  const y = (N - 1 - rowFromBottom) * CELL + CELL / 2;
+  return { x, y };
+}
+
+function draw() {
+  ctx.clearRect(0, 0, SIZE, SIZE);
+  drawTiles();
+  drawLadders();
+  drawSnakes();
+  drawPlayers();
+}
+
+function drawTiles() {
+  for (let t = 1; t <= 100; t++) {
+    const { x, y } = tileCenter(t);
+    const px = x - CELL / 2 + 2;
+    const py = y - CELL / 2 + 2;
+    const w  = CELL - 4;
+
+    let fill;
+    if (LADDERS[t])     fill = '#c9f5c2';
+    else if (SNAKES[t]) fill = '#ffd2d2';
+    else if (QUIZ_TILES.includes(t)) fill = '#fff0a8';
+    else                fill = `hsl(${(t * 29) % 360}, 62%, 90%)`;
+
+    roundRect(ctx, px, py, w, w, 9);
+    ctx.fillStyle = fill;
+    ctx.fill();
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = 'rgba(60,80,140,.20)';
+    ctx.stroke();
+
+    if (QUIZ_TILES.includes(t)) {
+      ctx.font = '16px serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('❓', x, y + 6);
+    }
+
+    ctx.font = 'bold 11px "Trebuchet MS", sans-serif';
+    ctx.fillStyle = 'rgba(40,55,100,.75)';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(t, px + 6, py + 5);
+  }
+}
+
+function drawLadders() {
+  for (const from in LADDERS) {
+    drawLadder(tileCenter(+from), tileCenter(LADDERS[from]));
+  }
+}
+
+function drawLadder(p1, p2) {
+  const dx = p2.x - p1.x, dy = p2.y - p1.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const nx = -dy / len * 7;
+  const ny =  dx / len * 7;
+
+  ctx.lineCap = 'round';
+
+  ctx.strokeStyle = 'rgba(0,0,0,.15)';
+  ctx.lineWidth = 9;
+  ctx.beginPath();
+  ctx.moveTo(p1.x + nx + 2, p1.y + ny + 3);
+  ctx.lineTo(p2.x + nx + 2, p2.y + ny + 3);
+  ctx.moveTo(p1.x - nx + 2, p1.y - ny + 3);
+  ctx.lineTo(p2.x - nx + 2, p2.y - ny + 3);
+  ctx.stroke();
+
+  ctx.strokeStyle = '#c98b3c';
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.moveTo(p1.x + nx, p1.y + ny);
+  ctx.lineTo(p2.x + nx, p2.y + ny);
+  ctx.moveTo(p1.x - nx, p1.y - ny);
+  ctx.lineTo(p2.x - nx, p2.y - ny);
+  ctx.stroke();
+
+  const rungs = Math.max(3, Math.round(len / 26));
+  ctx.strokeStyle = '#e0a95c';
+  ctx.lineWidth = 5;
+  for (let i = 1; i < rungs; i++) {
+    const t = i / rungs;
+    const cx = p1.x + dx * t;
+    const cy = p1.y + dy * t;
+    ctx.beginPath();
+    ctx.moveTo(cx + nx, cy + ny);
+    ctx.lineTo(cx - nx, cy - ny);
+    ctx.stroke();
+  }
+}
+
+function drawSnakes() {
+  for (const from in SNAKES) {
+    drawSnake(tileCenter(+from), tileCenter(SNAKES[from]));
+  }
+}
+
+function drawSnake(head, tail) {
+  const dx = tail.x - head.x, dy = tail.y - head.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const px = -dy / len, py = dx / len;
+
+  const waves = Math.max(2, Math.round(len / 90));
+  const amp = Math.min(18, len * 0.10);
+  const steps = 60;
+
+  const pts = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const bx = head.x + dx * t;
+    const by = head.y + dy * t;
+    const off = Math.sin(t * Math.PI * 2 * waves) * amp * Math.sin(Math.PI * t);
+    pts.push({ x: bx + px * off, y: by + py * off });
+  }
+
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  ctx.strokeStyle = 'rgba(0,0,0,.14)';
+  ctx.lineWidth = 15;
+  ctx.beginPath();
+  pts.forEach((p, i) => i ? ctx.lineTo(p.x + 2, p.y + 3) : ctx.moveTo(p.x + 2, p.y + 3));
+  ctx.stroke();
+
+  ctx.strokeStyle = '#3fa34d';
+  ctx.lineWidth = 12;
+  ctx.beginPath();
+  pts.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
+  ctx.stroke();
+
+  ctx.strokeStyle = '#8fd694';
+  ctx.lineWidth = 5;
+  ctx.setLineDash([6, 12]);
+  ctx.beginPath();
+  pts.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.beginPath();
+  ctx.arc(head.x, head.y, 12, 0, Math.PI * 2);
+  ctx.fillStyle = '#2e8b3d';
+  ctx.fill();
+  ctx.lineWidth = 2.5;
+  ctx.strokeStyle = '#1f6b2b';
+  ctx.stroke();
+
+  const ex = px, ey = py;
+  [-1, 1].forEach(s => {
+    ctx.beginPath();
+    ctx.arc(head.x + ex * 5 * s - 2, head.y + ey * 5 * s - 2, 3.2, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(head.x + ex * 5 * s - 2, head.y + ey * 5 * s - 2, 1.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#111';
+    ctx.fill();
+  });
+}
+
+function drawPlayers() {
+  state.players.forEach((p, i) => {
+    const base = p.pos > 0 ? tileCenter(p.pos) : tileCenter(1);
+    const ox = i === 0 ? -13 : 13;
+    const oy = i === 0 ? -13 : 13;
+    const x = base.x + ox;
+    const y = base.y + oy;
+
+    ctx.beginPath();
+    ctx.arc(x + 1, y + 3, 14, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0,0,0,.22)';
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(x, y, 14, 0, Math.PI * 2);
+    ctx.fillStyle = p.color;
+    ctx.fill();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#ffffff';
+    ctx.stroke();
+
+    ctx.font = '16px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(p.emoji, x, y + 1);
+  });
+}
+
+/* =========================================================
+   5. SOAL (angka 1–50)
+   ========================================================= */
+function makeQuestion() {
+  const isAdd = Math.random() < 0.5;
+  let a, b, answer, text;
+
+  if (isAdd) {
+    a = randInt(1, 50);
+    b = randInt(1, 50);
+    answer = a + b;
+    text = `${a} + ${b} = ?`;
+  } else {
+    a = randInt(1, 50);
+    b = randInt(1, a);
+    answer = a - b;
+    text = `${a} − ${b} = ?`;
+  }
+
+  const options = new Set([answer]);
+  let guard = 0;
+  while (options.size < 4 && guard++ < 300) {
+    const delta = randInt(-10, 10);
+    if (delta === 0) continue;
+    const cand = answer + delta;
+    if (cand < 0) continue;
+    options.add(cand);
+  }
+  let k = 1;
+  while (options.size < 4) { options.add(answer + k); k++; }
+
+  const arr = [...options].sort(() => Math.random() - 0.5);
+  return { text, answer, options: arr };
+}
+
+const quizModal = document.getElementById('quizModal');
+let quizResolve = null;
+
+function askQuiz(headline, sub) {
+  return new Promise(resolve => {
+    quizResolve = resolve;
+    const q = makeQuestion();
+
+    document.getElementById('quizHeadline').textContent = headline;
+    document.getElementById('quizSub').textContent = sub;
+    document.getElementById('quizQuestion').textContent = q.text;
+
+    const fb = document.getElementById('quizFeedback');
+    fb.textContent = '';
+    fb.className = 'quiz-feedback';
+
+    const wrap = document.getElementById('quizOptions');
+    wrap.innerHTML = '';
+
+    q.options.forEach(val => {
+      const btn = document.createElement('button');
+      btn.className = 'opt-btn';
+      btn.textContent = val;
+      btn.onclick = () => answerQuiz(btn, val, q.answer);
+      wrap.appendChild(btn);
+    });
+
+    quizModal.classList.remove('hidden');
+  });
+}
+
+function answerQuiz(btn, val, answer) {
+  const fb = document.getElementById('quizFeedback');
+  const allBtns = document.querySelectorAll('#quizOptions .opt-btn');
+  allBtns.forEach(b => (b.disabled = true));
+
+  if (val === answer) {
+    btn.classList.add('correct');
+    Music.sfxCorrect();
+    fb.textContent = '✅ Hebat! Jawabanmu benar!';
+    fb.className = 'quiz-feedback ok';
+    setTimeout(() => {
+      quizModal.classList.add('hidden');
+      if (quizResolve) { quizResolve(true); quizResolve = null; }
+    }, 1000);
+  } else {
+    btn.classList.add('wrong');
+    Music.sfxWrong();
+    allBtns.forEach(b => {
+      if (Number(b.textContent) === answer) b.classList.add('correct');
+    });
+    fb.textContent = `❌ Belum tepat. Jawaban benar: ${answer}`;
+    fb.className = 'quiz-feedback bad';
+    setTimeout(() => {
+      quizModal.classList.add('hidden');
+      if (quizResolve) { quizResolve(false); quizResolve = null; }
+    }, 2000);
+  }
+}
+
+/* =========================================================
+   6. LOGIKA GAME
+   ========================================================= */
+const logEl = document.getElementById('log');
+
+function log(msg) {
+  const div = document.createElement('div');
+  div.textContent = msg;
+  logEl.prepend(div);
+  while (logEl.children.length > 12) logEl.removeChild(logEl.lastChild);
+}
+
+function updateHUD() {
+  state.players.forEach((p, i) => {
+    document.getElementById('pcard' + i)
+      .classList.toggle('active', i === state.turn && !state.gameOver);
+    document.getElementById('score' + i).textContent = p.score;
+    document.getElementById('pos' + i).textContent = p.pos === 0 ? 'Start' : p.pos;
+  });
+
+  document.getElementById('turnEmoji').textContent = state.players[state.turn].emoji;
+  document.getElementById('turnName').textContent  = state.players[state.turn].name;
+  document.getElementById('rollBtn').disabled = state.busy || state.gameOver;
+
+  draw();
+}
+
+async function animateDice() {
+  const faces = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+  const el = document.getElementById('dice');
+  el.classList.add('rolling');
+  for (let i = 0; i < 12; i++) {
+    el.textContent = faces[randInt(0, 5)];
+    await sleep(60);
+  }
+  const val = randInt(1, 6);
+  el.textContent = faces[val - 1];
+  el.classList.remove('rolling');
+  return val;
+}
+
+async function moveSteps(player, steps) {
+  for (let i = 0; i < steps; i++) {
+    if (player.pos >= 100) break;
+    player.pos++;
+    updateHUD();
+    await sleep(150);
+  }
+}
+
+async function jumpTo(player, target) {
+  const dir = target > player.pos ? 1 : -1;
+  while (player.pos !== target) {
+    player.pos += dir;
+    updateHUD();
+    await sleep(65);
+  }
+}
+
+async function handleTile(player) {
+  const pos = player.pos;
+
+  const isLadder = !!LADDERS[pos];
+  const isSnake  = !!SNAKES[pos];
+  const isQuiz   = QUIZ_TILES.includes(pos);
+
+  let headline = '❓ KUIS BILANGAN BULAT';
+  let sub      = `Jawab soal untuk petak ${pos}`;
+
+  if (isLadder) {
+    headline = '🪜 TANGGA!';
+    sub = `Jawab benar untuk naik ke petak ${LADDERS[pos]}`;
+  } else if (isSnake) {
+    headline = '🐍 ADA ULAR!';
+    sub = `Jawab benar agar tidak turun ke petak ${SNAKES[pos]}`;
+  } else if (isQuiz) {
+    headline = '⭐ PETAK BONUS!';
+    sub = 'Jawab benar untuk bonus poin!';
+  }
+
+  const ok = await askQuiz(headline, sub);
+
+  if (isLadder) {
+    const to = LADDERS[pos];
+    if (ok) {
+      player.score += 10;
+      log(`✅ Benar! ${player.name} naik tangga ke petak ${to} (+10 poin).`);
+      Music.sfxLadder();
+      await jumpTo(player, to);
+    } else {
+      log(`❌ Salah. ${player.name} tidak naik tangga, tetap di petak ${pos}.`);
+    }
+    return;
+  }
+
+  if (isSnake) {
+    const to = SNAKES[pos];
+    if (ok) {
+      player.score += 10;
+      log(`✅ Benar! ${player.name} lolos dari ular (+10 poin).`);
+    } else {
+      log(`❌ Salah. ${player.name} meluncur turun ke petak ${to}.`);
+      Music.sfxSnake();
+      await jumpTo(player, to);
+    }
+    return;
+  }
+
+  if (isQuiz) {
+    if (ok) {
+      player.score += 15;
+      log(`⭐ Benar! Bonus +15 poin untuk ${player.name}.`);
+    } else {
+      log(`❌ Belum tepat, tidak ada bonus.`);
+    }
+    return;
+  }
+
+  if (ok) {
+    player.score += 5;
+    log(`✅ Benar! ${player.name} mendapat +5 poin di petak ${pos}.`);
+  } else {
+    player.score = Math.max(0, player.score - 2);
+    log(`❌ Salah. ${player.name} kehilangan 2 poin.`);
+  }
+}
+
+async function rollDice() {
+  if (state.busy || state.gameOver) return;
+
+  Music.start();
+  Music.sfxDice();
+
+  state.busy = true;
+  updateHUD();
+
+  const player = state.players[state.turn];
+  const value = await animateDice();
+  log(`🎲 ${player.name} melempar dadu: ${value}`);
+
+  await moveSteps(player, value);
+  updateHUD();
+
+  if (player.pos >= 100) { declareWin(player); return; }
+
+  await handleTile(player);
+  updateHUD();
+
+  if (player.pos >= 100) { declareWin(player); return; }
+  if (state.gameOver) return;
+
+  state.turn = 1 - state.turn;
+  state.busy = false;
+  updateHUD();
+}
+
+function declareWin(player) {
+  state.gameOver = true;
+  state.busy = false;
+  player.score += 20;
+  log(`🏆 ${player.name} MENCAPAI PETAK 100 dan MENANG! (+20 poin bonus)`);
+  updateHUD();
+
+  Music.sfxWin();
+
+  document.getElementById('winTitle').textContent = `${player.emoji} ${player.name} Menang!`;
+  document.getElementById('winSub').textContent =
+    `Skor akhir — ${state.players[0].name}: ${state.players[0].score} ⭐ | ` +
+    `${state.players[1].name}: ${state.players[1].score} ⭐`;
+  document.getElementById('winModal').classList.remove('hidden');
+}
+
+function resetGame() {
+  state.players.forEach(p => { p.pos = 0; p.score = 0; });
+  state.turn = 0;
+  state.busy = false;
+  state.gameOver = false;
+
+  document.getElementById('dice').textContent = '⚀';
+  logEl.innerHTML = '';
+  log('🎮 Permainan baru dimulai. Setiap berhenti di petak, soal akan muncul!');
+  document.getElementById('quizModal').classList.add('hidden');
+  document.getElementById('winModal').classList.add('hidden');
+
+  updateHUD();
+}
+
+/* =========================================================
+   7. EVENT LISTENER
+   ========================================================= */
+document.getElementById('rollBtn').addEventListener('click', rollDice);
+document.getElementById('resetBtn').addEventListener('click', resetGame);
+document.getElementById('winResetBtn').addEventListener('click', resetGame);
+
+const musicBtn = document.getElementById('musicBtn');
+musicBtn.addEventListener('click', () => {
+  const on = Music.toggle();
+  musicBtn.textContent = `🎵 Musik: ${on ? 'ON' : 'OFF'}`;
+  musicBtn.classList.toggle('off', !on);
+});
+
+/* =========================================================
+   8. MULAI
+   ========================================================= */
+log('🎮 Selamat datang! Klik "Lempar Dadu" untuk memulai. Musik ceria akan mengiringi permainan!');
+updateHUD();
+</script>
+</body>
+</html>
